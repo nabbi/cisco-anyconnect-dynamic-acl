@@ -1,0 +1,40 @@
+#!/usr/bin/expect
+
+# source include this file to initialize the ssh connection and prompt
+
+# read from include config file
+set username $config(device-username)
+set password $config(device-password)
+
+# used to SSH into device
+set hostname [lindex $argv 0]
+
+# ssh to host
+if {$debug} { puts "## opening ssh to $hostname" }
+
+set sshkey [catch {exec ssh-keygen -R $hostname}]
+spawn ssh -q -o StrictHostKeyChecking=no -o KexAlgorithms=+diffie-hellman-group1-sha1 -o HostKeyAlgorithms=+ssh-rsa $username@$hostname
+
+# ssh password prompt
+expect {
+    timeout { send_user "Failed to get password prompt\n"; exit 1 }
+    eof { send_user "Failed SSH handshake\n"; exit 1 }
+    -nocase "password:"
+}
+
+# attempt login with our password
+send "$password\r"
+expect {
+    timeout { send_user "Timeout during password send\n"; exit 1 }
+    eof { send_user "Failed to complete SSH authentication\n"; exit 1 }
+    -nocase "Password:" { send_user "Invalid username or password\n"; exit 1 }
+    -nocase "Connection closed" { send_user "Hmm. Your password might be valid, are you lacking authorization?\n"; exit 1 }
+    "*#"
+}
+
+# validate we are on the correct host
+set p "$hostname*#"
+
+# disabled cli pager
+myexpect "terminal pager 0" $p
+

@@ -1,0 +1,4 @@
+inc/config.tcl
+lists/dynamic.txt
+lists/exclude.txt
+lists/static.txt

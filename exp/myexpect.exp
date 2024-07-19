@@ -1,0 +1,59 @@
+#!/usr/bin/expect
+
+# exit for myexpect
+proc abort {error buffer} {
+    puts "\n\n## Terminating: $error\n"
+        log "error" $buffer
+        error $buffer
+}
+
+# standard unexpected error handling cisco asa
+proc myexpect {cmd p} {
+
+    send -- "$cmd\r"
+
+        expect {
+            
+            # protects our coding below from being at the incorrect cmd prompt level
+            timeout {
+                [abort "Timeout occurred" "Failed to detect '$p' as our prompt!"]
+            }
+            
+            eof {
+                [abort "lost terminal" $expect_out(buffer)]
+            }
+           
+            # syntax error
+            -nocase "syntax error" {
+                [abort "syntax error" $expect_out(buffer)]
+            }
+            
+            # while these warnings appear harmless I catch and exit
+            # an indication of a broken process
+            # WARNING: <exclude-vpn-ipv6> found duplicate element
+            -nocase "warning" {
+                [abort "warning" $expect_out(buffer)]
+            }
+
+            # unknown errors?
+            -nocase "error" {
+                [abort "unexpected error" $expect_out(buffer)]
+            }
+
+            # unknown invalid?
+            -nocase "invalid" {
+                [abort "unexpected invalid" $expect_out(buffer)]
+            }
+
+            ## unknown fail?
+            ##  disabled as asa prompts contain actNoFailover for single member systems
+            ## -nocase "fail" {
+            ##     [abort "unexpected fail" $expect_out(buffer)]
+            ## }
+
+            # default assume the command worked as we got the prompt
+            -nocase $p
+
+        }
+}
+

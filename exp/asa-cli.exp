@@ -1,0 +1,58 @@
+#!/usr/bin/expect
+
+## exp_internal 0
+log_user 0
+set timeout 30
+
+set debug 0
+
+set path [file dirname [file normalize [info script]]]
+source $path/../inc/config.tcl
+source $path/myexpect.exp
+
+proc help {} {
+    puts "Cisco ASA"
+    puts "ssh to device and run commands read from standard input"
+    puts "Usage:\n\t$::argv0 device < commands\n"
+    exit 1
+}
+
+if {[llength $argv] != 1} {
+    puts "Incorrect number of arguments"
+    [help]
+}
+
+## establish ssh
+source $path/ssh-init.exp
+
+# clear any buffers we might have
+unset expect_out(buffer)
+
+# increase buffer size
+match_max 8000
+
+log_user 1
+# read asa commands to exec from stdin
+foreach c [split [read stdin] "\n"] {
+    # here we detect if a copy run start was triggered
+    if { [string match $c ":save:"] } {
+        send "copy running-config startup-config\r"
+        expect "Source filename*"
+        send "\r"
+        expect $p
+    } else {
+        myexpect $c $p
+    }
+}
+log_user 0
+
+# change buffer back to runtime value
+match_max -d
+
+# logoff
+send "exit\r"
+expect eof
+
+# adds a new line before exiting
+puts ""
+exit 0

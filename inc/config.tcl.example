@@ -1,0 +1,12 @@
+# configuration file
+
+# Cisco ASA Hostnames
+set config(hosts) {asa1 asa2 asa3}
+
+# SSH Admin Credentials
+set config(device-username) {admin}
+set config(device-password) {}
+
+# Access List Name
+set config(acl_name) "exclude-vpn"
+
