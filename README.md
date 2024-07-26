@@ -4,6 +4,8 @@ Dynamically update access control lists on Cisco ASA (and maybe FTD)
 
 Intended to become the source of truth for managing AnyConnect split tunnel network policy.
 
+![config flow](https://raw.githubusercontent.com/nabbi/cisco-anyconnect-dynamic-acl/master/flow.png)
+
 ## ASA Pre-Req
 
 This routine anticipates the named ACL be manually defined within the ASA running config.
